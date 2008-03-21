@@ -18,7 +18,7 @@ File Name:
 
 	ColdSpringXMLUtils.cfc
 	
-Version: 1.0	
+Version: 1.01
 
 Description: 
 
@@ -26,7 +26,8 @@ Description:
 	values specified in the passed structure. ColdSpring itself allows for some
 	dynamic properties, but only in certain places in the XML such as constructor
 	argument values. Using this CFC allows you to place dynamic properties anywhere
-	in the XML.
+	in the XML. It also will handle including and replacing dynamic properties
+	in any included ColdSpring files that use <include> tag.
 	
 Requirements:
 
@@ -75,17 +76,44 @@ Usage:
 		<cfargument name="coldSpringXMLPath" type="string" required="true" hint="Path to ColdSpring XML File i.e. '/myapp/config/coldspring.xml'" />
 		<cfargument name="properties" type="struct" required="false" default="#StructNew()#" hint="Structure containing the dynamic properties to be replaced. The key names must match the dynamic properties in the XML file." />
 		<cfset var local = StructNew() />
-		<cfset local.replacedColdSpringXML = replaceDynamicValues(arguments.coldSpringXMLPath, arguments.properties) />		
 		<cfset local.beanFactory = CreateObject('component', 'coldspring.beans.DefaultXmlBeanFactory').init(defaultProperties=arguments.properties) />
+		<cfset local.replacedColdSpringXML = getReplacedColdSpringXML(arguments.coldSpringXMLPath, arguments.properties) />
 		<cfset local.beanFactory.loadBeansFromXmlRaw(beanDefinitionXml=local.replacedColdSpringXML, constructNonLazyBeans=true) />
-		<cfreturn local.beanFactory />		
+		<cfreturn local.beanFactory />
 	</cffunction>
 	
-	<cffunction name="replaceDynamicValues" access="public" returntype="string" output="false" hint="I replace any dynamic values in the ColdSpring XML with matching values in the specified value structure">
+	<cffunction name="getReplacedColdSpringXML" access="public" returntype="string" output="false" hint="I return the ColdSpring XML with all imports processed and dynamic properties replaced.">
+		<cfargument name="coldSpringXMLPath" type="string" required="true" hint="Path to ColdSpring XML File i.e. '/myapp/config/coldspring.xml'" />
+		<cfargument name="properties" type="struct" required="false" default="#StructNew()#" hint="Structure containing the dynamic properties to be replaced. The key names must match the dynamic properties in the XML file." />
+		<cfset var local = StructNew() />
+		<cfset local.imports = StructNew() />
+		<cfset local.beanFactory = CreateObject('component', 'coldspring.beans.DefaultXmlBeanFactory').init() />
+		<cfset local.beanFactory.findImports(local.imports, arguments.coldSpringXMLPath) />
+		<cfif StructCount(local.imports) eq 1>
+			<cfset arguments.coldSpringXMLPath = ExpandPath(arguments.coldSpringXMLPath) />
+			<cfset local.replacedColdSpringXML = replaceDynamicValues(arguments.coldSpringXMLPath, arguments.properties) />		
+		<cfelseif StructCount(local.imports) gt 1>
+			<cfset local.replacedXMLArray = ArrayNew(1) />
+			<cfloop collection="#local.imports#" item="local.thisImport">
+				<cfset local.tempImportData = StructNew() />
+				<cfset local.tempImportData.importFile = local.thisImport />
+				<cfset local.tempImportData.replacedXML = replaceDynamicValues(local.thisImport, arguments.properties) />
+				<cfset ArrayAppend(local.replacedXMLArray, local.tempImportData) />
+			</cfloop>
+			<cfset local.replacedColdSpringXML = '<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">#Chr(13)##Chr(10)#<beans>#Chr(13)##Chr(10)##Chr(13)##Chr(10)#' />
+			<cfloop from="1" to="#ArrayLen(local.replacedXMLArray)#" index="local.thisXML">
+				<cfset local.replacedColdSpringXML = local.replacedColdSpringXML & '#Chr(13)##Chr(10)##Chr(9)#<!-- @import processed from #local.replacedXMLArray[local.thisXML].importFile# -->#Chr(13)##Chr(10)#' & ReReplaceNoCase(local.replacedXMLArray[local.thisXML].replacedXML, '.*<beans>|<import[^>]*>|</beans>', '', 'All') />	
+			</cfloop>			
+			<cfset local.replacedColdSpringXML = local.replacedColdSpringXML & '</beans>' />
+		</cfif>
+		<cfreturn local.replacedColdSpringXML />
+	</cffunction>
+	
+	<cffunction name="replaceDynamicValues" access="private" returntype="string" output="false" hint="I replace any dynamic values in the ColdSpring XML with matching values in the specified value structure">
 		<cfargument name="coldSpringXMLPath" type="string" required="true" hint="Path to ColdSpring XML File i.e. '/myapp/config/coldspring.xml'" />
 		<cfargument name="dynamicValues" type="struct" required="false" default="#StructNew()#" hint="Structure containing the dynamic properties to be replaced. The key names must match the dynamic properties in the XML file." />
 		<cfset var local = StructNew() />
-		<cffile action="read" file="#ExpandPath(arguments.coldSpringXMLPath)#" variable="local.coldSpringXML" />
+		<cffile action="read" file="#arguments.coldSpringXMLPath#" variable="local.coldSpringXML" />
 		<cfset local.matches = ReMatchNoCase('\$\{[^}]*\}', local.coldSpringXML) />
 		<cfset local.stringBuilder = CreateObject("java","java.lang.StringBuilder").init(JavaCast("string", local.coldSpringXML)) />
 		<cfoutput>
