@@ -114,6 +114,8 @@ Usage:
 		<cfargument name="dynamicValues" type="struct" required="false" default="#StructNew()#" hint="Structure containing the dynamic properties to be replaced. The key names must match the dynamic properties in the XML file." />
 		<cfset var local = StructNew() />
 		<cffile action="read" file="#arguments.coldSpringXMLPath#" variable="local.coldSpringXML" />
+		<cfset local.coldSpringXML = ReReplaceNoCase(local.coldSpringXML, '.*<beans[^>]*>', '', 'all') />
+		<cfset local.coldSpringXML = ReReplaceNoCase(local.coldSpringXML, '</beans>.*', '', 'all') />
 		<cfset local.matches = ReMatchNoCase('\$\{[^}]*\}', local.coldSpringXML) />
 		<cfset local.stringBuilder = CreateObject("java","java.lang.StringBuilder").init(JavaCast("string", local.coldSpringXML)) />
 		<cfoutput>
