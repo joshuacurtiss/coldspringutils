@@ -1,0 +1,122 @@
+body {
+	padding: 0;
+	margin: 0;
+}
+
+p {
+	padding-left: 2em;
+	padding-right: 2em;
+}
+
+acronym {
+	cursor: pointer;
+	border-bottom: 1px dashed;
+}
+
+a, a:link, a:visited, a:hover {
+	text-decoration: none;
+	border-bottom: 1px dashed;
+}
+
+h1 {
+	margin: 0;
+	padding: 0;
+}
+
+h2 {
+	position: relative;
+	left:-10%;
+	width: 40%;
+	border: 1px solid;
+	padding: 0.1em;
+	margin-left: 5%;
+	text-align: center;
+}
+
+h3 {
+	padding: 0 5em;
+	border-top: 1px dotted;
+	border-right: 1px dotted;
+	border-bottom: 1px dotted;
+	width: 50%
+}
+
+dl {
+	margin-left: 2em;
+	margin-right: 2em;
+}
+
+dl dt {
+	font-weight: bold;
+	border-bottom: 1px solid;
+}
+
+input {
+	border: 1px dotted;
+}
+
+.limited {
+	border-top: 1px solid;
+	border-bottom: 1px solid;
+	height: 10em;
+	overflow: auto;
+}
+
+p.top {
+	text-align: right;
+}
+
+p.top a {
+	border: 0;
+}
+
+ul.limited {
+	margin-left: 0;
+	padding-left: 1em;
+}
+
+#banner {
+	padding: 0.3em;
+}
+
+#summary {
+	display: none;
+}
+
+#menu ol {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+	border-left: 1px solid;
+	border-right: 2px solid;
+	border-bottom: 2px solid;
+}
+
+#menu ol li {
+	display: inline;
+}
+
+#menu ol li a, #menu ol li span {
+	border-left: 1px solid;
+	border-right: 1px solid;
+	padding: 0 1em;
+}
+
+
+#content {
+	margin: 0 15% 0 15%;
+	border-left: 1px dotted;
+	border-right: 1px dotted;
+	border-bottom: 1px dotted;
+	padding-top: 2em;
+	padding-bottom: 2em;
+}
+
+#content p {
+	margin: 0 1em 1em 1em;
+}
+
+#last {
+	border-right: 1px solid;
+}
+

@@ -1,0 +1,7 @@
+<metadata>
+	<target name="userService">
+		<method name="getUser"
+			converter="UserVOConverter"
+			userVOType="com.myflexapp.User" />
+	</target>
+</metadata>

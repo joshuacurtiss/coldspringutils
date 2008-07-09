@@ -36,12 +36,12 @@ Usage:
 		</metadata>
 		
 	You may optionally specify a custom converter to use in place of the GenericVOConverter by defining a metadata key
-	of "converter":
+	of "converter" and defining a ColdSpring bean to be used as the converter:
 	
 		<metadata>
 			<target name="productService"
 					productVO="tests.coldspring.metadata.ProductVO"
-					converter="tests.coldspring.metadata.CustomProductVOConverter" />
+					converter="CustomProductVOConverter" />
 		</metadata>	
 	
 	Note that using the key name of "vo" is only mandatory if you intend to use the GenericVOConverter. When using a
@@ -57,7 +57,7 @@ Usage:
 		
 --->
 
-<cfcomponent output="false" displayname="VOConverterAdvice" hint="" extends="tests.coldspring.metadata.AbstractMetadataAwareAdvice">
+<cfcomponent output="false" displayname="VOConverterAdvice" hint="" extends="AbstractMetadataAwareAdvice">
 
 	<cffunction name="init" returntype="any" output="false" access="public" hint="Constructor">
 		<cfset var local = StructNew() />

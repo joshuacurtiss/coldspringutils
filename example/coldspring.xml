@@ -1,0 +1,79 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-autowire="no">	
+	
+	<!-- Beans -->
+	<bean id="userService" class="${examplePackage}.UserService">
+		<property name="userFactory">
+			<ref bean="userFactory" />
+		</property>
+	</bean>
+	
+	<bean id="userFactory" class="${examplePackage}.UserFactory">
+		<property name="beanInjector">
+			<ref bean="beanInjector" />
+		</property>
+	</bean>
+	
+	<bean id="proxiedUserService" class="${beanUtilsPackage}.MetadataAwareProxyFactoryBean" lazy-init="true">
+		<property name="interceptorNames">
+			<list>
+				<value>userVOConverterAdvisor</value>
+			</list>
+		</property>
+		<property name="targetBeanID">
+			<value>userService</value>
+		</property>
+		<property name="metadataPath">
+			<value>${applicationPath}</value>
+		</property>
+		<property name="advicePackage">
+			<value>${beanUtilsPackage}</value>
+		</property>
+	</bean>
+	
+	<!-- Remote Proxy -->
+	<bean id="remoteUserService" class="${beanUtilsPackage}.MetadataAwareRemoteFactoryBean" lazy-init="${lazyInitRemoteProxies}">
+		<property name="interceptorNames">
+			<list>
+				<value>userVOConverterAdvisor</value>
+			</list>
+		</property>
+		<property name="targetBeanID">
+			<value>userService</value>
+		</property>
+		<property name="remoteMethodNames">
+			<value>getUser</value>
+		</property>
+		<property name="relativePath">
+			<value>${applicationPath}</value>
+		</property>
+		<property name="beanFactoryName">
+   			<value>BeanFactory</value>
+		</property>
+		<property name="metadataPath">
+			<value>${applicationPath}</value>
+		</property>
+		<property name="advicePackage">
+			<value>${beanUtilsPackage}</value>
+		</property>
+	</bean>
+	
+	<!-- AOP Advices -->
+	<bean id="userVOConverterAdvice" class="${beanUtilsPackage}.VOConverterAdvice" lazy-init="true" />
+	
+	<bean id="userVOConverterAdvisor" class="coldspring.aop.support.NamedMethodPointcutAdvisor" lazy-init="true">
+		<property name="advice">
+			<ref bean="userVOConverterAdvice" />
+		</property>
+		<property name="mappedNames">
+			<value>getUser</value>
+		</property>
+	</bean>
+	
+	<!-- User Value Object Converter for Flex -->
+	<bean id="userVOConverter" class="${examplePackage}.UserVOConverter" />
+	
+	<!-- Bean Injector to autowire transient objects -->
+	<bean id="beanInjector" class="${beanUtilsPackage}.BeanInjector" />
+
+</beans>
