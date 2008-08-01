@@ -233,7 +233,7 @@ Usage:
 		
 		<!--- If the metadata element extends another component, recurse that component. --->		
 		<cfif StructKeyExists(arguments.metadata, 'extends')>
-			<cfif Len(arguments.stopRecursionAt) and arguments.metadata.extends.name neq arguments.stopRecursionAt>
+			<cfif not Len(arguments.stopRecursionAt) or (Len(arguments.stopRecursionAt) and arguments.metadata.extends.name neq arguments.stopRecursionAt)>
 				<cfset performDIRecursion(arguments.targetObject, arguments.metaData.extends, arguments.originalTypeName, arguments.stopRecursionAt) />
 			</cfif>
 		</cfif>
