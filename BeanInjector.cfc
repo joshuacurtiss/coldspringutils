@@ -188,6 +188,7 @@ Usage:
 		<cfif StructKeyExists(arguments.metadata, 'functions')>
 			<cfloop from="1" to="#ArrayLen(arguments.metaData.functions)#" index="thisFunction">
 				<cfif Left(arguments.metaData.functions[thisFunction].name, 3) eq "set" 
+						and Len(arguments.metaData.functions[thisFunction].name) gt 3
 						and (not StructKeyExists(arguments.metaData.functions[thisFunction], 'access') 
 							 or 
 							 arguments.metaData.functions[thisFunction].access eq 'public')>
