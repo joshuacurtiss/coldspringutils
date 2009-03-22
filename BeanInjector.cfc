@@ -2,23 +2,25 @@
 LICENSE 
 Copyright 2008 Brian Kotek
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+	
+	    http://www.apache.org/licenses/LICENSE-2.0
+	
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
 
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+	Thanks to Jon Messer for the thread safety patch that added the loadedKey logic.
 
 File Name: 
 
 	BeanInjector.cfc
 	
-Version: 1.0	
+Version: 1.1	
 
 Description: 
 
@@ -110,6 +112,7 @@ Usage:
 		<cfset variables.DICache = StructNew() />
 		<cfset variables.debugMode = arguments.debugMode />
 		<cfset variables.suffixList = arguments.suffixList />
+		<cfset variables.loadedKey = CreateUUID() />
 		<cfreturn this />
 	</cffunction>
 	
@@ -126,14 +129,14 @@ Usage:
 		</cfif>
 		
 		<!--- If the DI resolution has already been cached, inject from the cache. --->
-		<cfif StructKeyExists(variables.DICache, local.typeName)>
+		<cfif StructKeyExists(variables.DICache, local.typeName) and StructKeyExists(variables.DICache[local.typeName], variables.loadedKey)>
 			<cfset injectCachedBeans(arguments.targetComponent, local.typeName) />
 		<cfelse>
 		
 			<!--- Double-checked lock based on Object Type Name to handle race conditions. --->
 			<cflock name="Lock_BeanInjector_Exclusive_#local.typeName#" type="exclusive" timeout="5" throwontimeout="true">
 				
-				<cfif StructKeyExists(variables.DICache, local.typeName)>
+				<cfif StructKeyExists(variables.DICache, local.typeName) and StructKeyExists(variables.DICache[local.typeName], variables.loadedKey)>
 					<cfset injectCachedBeans(arguments.targetComponent, local.typeName) />
 				<cfelse>	
 					<!--- Create a new cache element for this component. --->
@@ -144,6 +147,9 @@ Usage:
 			    	
 			    	<!--- Recurse the inheritance tree of the component and attempt to resolve dependencies. --->
 			    	<cfset performDIRecursion(arguments.targetComponent, local.objMetaData, local.typeName, arguments.stopRecursionAt) />
+			    	
+			    	<!--- Update the DI cache to set this type as loaded. --->
+			    	<cfset variables.DICache[local.typeName][variables.loadedKey]=true />
 				</cfif>
 				
 			</cflock>
@@ -159,8 +165,10 @@ Usage:
 		<cfset var thisProperty = "" />
 		<cfif StructCount(variables.DICache[arguments.typeName]) gt 0>
 			<cfloop collection="#variables.DICache[arguments.typeName]#" item="thisProperty">
-				<cfset injectBean(arguments.targetComponent, thisProperty, variables.DICache[arguments.typeName][thisProperty]) />
-				<cfif variables.debugMode><cftrace text="The cached dependency #thisProperty# was successfully injected into #arguments.typeName#." inline="false"></cfif>
+				<cfif thisProperty neq variables.loadedKey>
+					<cfset injectBean(arguments.targetComponent, thisProperty, variables.DICache[arguments.typeName][thisProperty]) />
+					<cfif variables.debugMode><cftrace text="The cached dependency #thisProperty# was successfully injected into #arguments.typeName#." inline="false"></cfif>
+				</cfif>
 			</cfloop>
 		</cfif>
 	</cffunction>
